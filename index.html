@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rick and Morty Character Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1 class="logo">
+                    <span class="logo-text">Rick & Morty</span>
+                    <span class="logo-subtitle">Character Explorer</span>
+                </h1>
+                <nav class="nav">
+                    <button class="favorites-toggle" id="favoritesToggle" aria-label="Ver favoritos">
+                        <span class="favorites-icon">❤</span>
+                        <span class="favorites-count" id="favoritesCount">0</span>
+                    </button>
+                    <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema">
+                        <span class="theme-icon">🌙</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Search and Filters Section -->
+            <section class="search-section">
+                <div class="search-container">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Buscar personajes por nombre..." class="search-input">
+                        <button class="search-btn" id="searchBtn">
+                            <span class="search-icon">🔍</span>
+                        </button>
+                    </div>
+                    
+                    <div class="filters">
+                        <select id="statusFilter" class="filter-select">
+                            <option value="">Todos los estados</option>
+                            <option value="alive">Vivo</option>
+                            <option value="dead">Muerto</option>
+                            <option value="unknown">Desconocido</option>
+                        </select>
+                        
+                        <select id="speciesFilter" class="filter-select">
+                            <option value="">Todas las especies</option>
+                        </select>
+
+                        <select id="episodeFilter" class="filter-select">
+                            <option value="">Todos los episodios</option>
+                            <!-- Opciones se llenan dinámicamente -->
+                        </select>
+                        
+                        <button class="clear-filters-btn" id="clearFilters">Limpiar filtros</button>
+                    </div>
+                </div>
+                
+                <div class="results-info">
+                    <span class="results-count" id="resultsCount">Cargando personajes...</span>
+                </div>
+            </section>
+
+            <!-- Loading Spinner -->
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>Cargando personajes...</p>
+            </div>
+
+            <!-- Error Message -->
+            <div class="error-message" id="errorMessage" style="display: none;">
+                <h3>¡Oops! Algo salió mal</h3>
+                <p id="errorText"></p>
+                <button class="retry-btn" id="retryBtn">Intentar de nuevo</button>
+            </div>
+
+            <!-- Characters Grid -->
+            <section class="characters-section">
+                <div class="characters-grid" id="charactersGrid">
+                    <!-- Character cards will be inserted here -->
+                </div>
+            </section>
+
+            <!-- Pagination -->
+            <!--
+            <section class="pagination-section">
+                <div class="pagination" id="pagination">
+                    <!-- Pagination buttons will be inserted here -->
+                
+        </div>
+    </main>
+
+    <!-- Character Detail Modal -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="characterModal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalTitle">Detalles del Personaje</h2>
+                <button class="modal-favorite-btn" id="modalFavoriteBtn" aria-label="Añadir a favoritos">♡</button>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            
+            <div class="modal-content" id="modalContent">
+                <!-- Character details will be inserted here -->
+            </div>
+            
+            <div class="modal-navigation">
+                <button class="nav-btn prev-btn" id="prevCharacter">
+                    <span>←</span> Anterior
+                </button>
+                <button class="nav-btn next-btn" id="nextCharacter">
+                    Siguiente <span>→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button class="back-to-top" id="backToTop" aria-label="Volver arriba">
+        <span>↑</span>
+    </button>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <p>&copy; 2025 Rick and Morty Character Explorer</p>
+                <p>Desarrollado con ❤️ para los chicos del Diplomado de Front End</p>
+                <p>API proporcionada por <a href="https://rickandmortyapi.com/" target="_blank" rel="noopener">rickandmortyapi.com</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Files -->
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
