@@ -301,6 +301,8 @@ body {
   transition: var(--transition);
   cursor: pointer;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .character-card:hover {
@@ -321,6 +323,9 @@ body {
 
 .character-info {
   padding: var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .character-name {
@@ -335,6 +340,7 @@ body {
   flex-direction: column;
   gap: var(--spacing-xs);
   margin-bottom: var(--spacing-md);
+  flex-grow: 1;
 }
 
 .character-detail {
@@ -364,19 +370,21 @@ body {
 }
 
 .detail-btn {
-  background: var(--primary-color);
-  color: var(--white);
-  border: none;
+  background: transparent;
+  color: var(--primary-color);
+  border: 2px solid var(--primary-color);
   padding: var(--spacing-xs) var(--spacing-md);
   border-radius: var(--border-radius);
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   transition: var(--transition);
   width: 100%;
+  margin-top: auto;
 }
 
 .detail-btn:hover {
-  background: #0096c7;
+  background: var(--primary-color);
+  color: var(--white);
 }
 
 /* ===== PAGINATION ===== */

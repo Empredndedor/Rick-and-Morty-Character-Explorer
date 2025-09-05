@@ -118,6 +118,21 @@ class RickAndMortyAPI {
    * @returns {Promise<Object>} Resultados filtrados
    */
   async searchCharacters(filters = {}, page = 1) {
+    if (filters.episode) {
+      const episode = await this.getEpisode(filters.episode);
+      const characterIds = episode.characters.map(url => url.split('/').pop());
+      const characters = await this.getMultipleCharacters(characterIds);
+      return {
+        info: {
+          count: characters.length,
+          pages: 1,
+          next: null,
+          prev: null
+        },
+        results: characters
+      };
+    }
+
     const params = new URLSearchParams();
     
     if (filters.name) {
