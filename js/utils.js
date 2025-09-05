@@ -182,14 +182,16 @@ function hideLoading() {
  * @param {number} total - Total de resultados
  */
 function updateResultsCount(count, total = null) {
-  const resultsCount = document.getElementById('resultsCount');
-  if (resultsCount) {
-    if (total !== null) {
-      resultsCount.textContent = `Mostrando ${count} de ${total} personajes`;
-    } else {
-      resultsCount.textContent = `${count} personajes encontrados`;
+    const resultsCount = document.getElementById('resultsCount');
+    if (resultsCount) {
+        if (total === 0) {
+            resultsCount.textContent = 'No se encontraron personajes que coincidan con tu búsqueda.';
+        } else if (total !== null) {
+            resultsCount.textContent = `Mostrando ${count} de ${total} personajes`;
+        } else {
+            resultsCount.textContent = `${count} personajes encontrados`;
+        }
     }
-  }
 }
 
 /**

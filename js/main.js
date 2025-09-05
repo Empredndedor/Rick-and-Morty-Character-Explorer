@@ -9,13 +9,16 @@ class RickAndMortyApp {
     this.currentFilters = {
       name: '',
       status: '',
-      species: ''
+      species: '',
+      episode: ''
     };
     this.characters = [];
     this.totalPages = 1;
     this.totalCharacters = 0;
     this.currentCharacterIndex = 0;
     this.allSpecies = [];
+    this.isLoading = false;
+    this.hasMore = true;
     this.favorites = new Set(Utils.StorageManager.get('favorites', []));
     
     // Referencias a elementos del DOM
@@ -53,6 +56,7 @@ class RickAndMortyApp {
       searchBtn: document.getElementById('searchBtn'),
       statusFilter: document.getElementById('statusFilter'),
       speciesFilter: document.getElementById('speciesFilter'),
+      episodeFilter: document.getElementById('episodeFilter'),
       clearFilters: document.getElementById('clearFilters'),
       
       // Resultados
@@ -103,6 +107,7 @@ class RickAndMortyApp {
     // Filtros
     this.elements.statusFilter.addEventListener('change', () => this.handleFilterChange());
     this.elements.speciesFilter.addEventListener('change', () => this.handleFilterChange());
+    this.elements.episodeFilter.addEventListener('change', () => this.handleFilterChange());
     this.elements.clearFilters.addEventListener('click', () => this.clearAllFilters());
     
     // Modal
@@ -141,16 +146,23 @@ class RickAndMortyApp {
     // Teclado global
     document.addEventListener('keydown', (e) => this.handleGlobalKeyboard(e));
     
-    // Scroll para back to top
-    const throttledScroll = Utils.throttle(() => this.handleScroll(), 100);
+    // Scroll para back to top y carga infinita
+    const throttledScroll = Utils.throttle(() => {
+        this.handleScroll();
+        if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 200)) {
+            this.loadMoreCharacters();
+        }
+    }, 100);
     window.addEventListener('scroll', throttledScroll);
-    
-    // Carga de más personajes al hacer scroll
-    window.addEventListener('scroll', () => {
-      if ((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 200)) {
-        this.loadMoreCharacters();
-      }
-    });
+  }
+
+  /**
+   * Carga más personajes si hay más por cargar
+   */
+  async loadMoreCharacters() {
+    if (this.hasMore) {
+        await this.loadCharacters(true);
+    }
   }
 
   /**
@@ -209,54 +221,68 @@ class RickAndMortyApp {
   /**
    * Carga personajes según filtros actuales
    */
-  async loadCharacters() {
+  async loadCharacters(loadMore = false) {
+    if (this.isLoading) return;
+    this.isLoading = true;
+    if (!loadMore) {
+        this.currentPage = 1;
+        this.characters = [];
+        this.elements.charactersGrid.innerHTML = '';
+    }
+
     Utils.showLoading();
     Utils.hideError();
-    
+
     try {
-      const response = await api.searchCharacters(this.currentFilters, this.currentPage);
-      
-      this.characters = response.results;
-      this.totalPages = response.info.pages;
-      this.totalCharacters = response.info.count;
-      
-      this.renderCharacters();
-      this.renderPagination();
-      this.updateResultsDisplay();
-      
+        const response = await api.searchCharacters(this.currentFilters, this.currentPage);
+
+        this.hasMore = response.info.next !== null;
+        this.totalPages = response.info.pages;
+        this.totalCharacters = response.info.count;
+
+        this.characters = this.characters.concat(response.results);
+        this.renderCharacters(response.results);
+        this.updateResultsDisplay();
+
+        if (this.hasMore) {
+            this.currentPage++;
+        }
     } catch (error) {
-      console.error('Error al cargar personajes:', error);
-      Utils.showError(APIHelpers.handleAPIError(error));
-      this.characters = [];
-      this.renderCharacters();
+        console.error('Error al cargar personajes:', error);
+        Utils.showError(APIHelpers.handleAPIError(error));
+        this.characters = [];
+        this.renderCharacters();
     } finally {
-      Utils.hideLoading();
+        this.isLoading = false;
+        Utils.hideLoading();
     }
-  }
+}
 
   /**
    * Renderiza las tarjetas de personajes
    */
-  renderCharacters() {
+  renderCharacters(charactersToRender) {
     const grid = this.elements.charactersGrid;
-    grid.innerHTML = '';
-    
-    if (this.characters.length === 0) {
-      const noResults = Utils.createElement('div', {
-        className: 'no-results text-center'
-      }, `
-        <h3>No se encontraron personajes</h3>
-        <p>Intenta ajustar tus filtros de búsqueda</p>
-      `);
-      grid.appendChild(noResults);
-      return;
+
+    if (!charactersToRender && this.characters.length === 0) {
+        grid.innerHTML = '';
+        const noResults = Utils.createElement('div', {
+            className: 'no-results text-center'
+        }, `
+            <h3>No se encontraron personajes</h3>
+            <p>Intenta ajustar tus filtros de búsqueda</p>
+        `);
+        grid.appendChild(noResults);
+        return;
     }
-    
-    this.characters.forEach((character, index) => {
-      const card = this.createCharacterCard(character, index);
-      grid.appendChild(card);
+
+    const characters = charactersToRender || this.characters;
+    characters.forEach((character) => {
+        const index = this.characters.findIndex(c => c.id === character.id);
+        const card = this.createCharacterCard(character, index);
+        grid.appendChild(card);
     });
-  }
+}
 
   /**
    * Crea una tarjeta de personaje
@@ -532,81 +558,6 @@ class RickAndMortyApp {
     this.elements.nextCharacter.disabled = this.currentCharacterIndex === this.characters.length - 1;
   }
 
-  /**
-   * Renderiza la paginación
-   */
-  renderPagination() {
-    const pagination = this.elements.pagination;
-    pagination.innerHTML = '';
-    
-    if (this.totalPages <= 1) {
-      return;
-    }
-    
-    // Botón anterior
-    const prevBtn = this.createPageButton('‹ Anterior', this.currentPage - 1, this.currentPage === 1);
-    pagination.appendChild(prevBtn);
-    
-    // Páginas
-    const startPage = Math.max(1, this.currentPage - 2);
-    const endPage = Math.min(this.totalPages, this.currentPage + 2);
-    
-    if (startPage > 1) {
-      pagination.appendChild(this.createPageButton('1', 1));
-      if (startPage > 2) {
-        pagination.appendChild(this.createPageButton('...', null, true));
-      }
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-      const btn = this.createPageButton(i.toString(), i, false, i === this.currentPage);
-      pagination.appendChild(btn);
-    }
-    
-    if (endPage < this.totalPages) {
-      if (endPage < this.totalPages - 1) {
-        pagination.appendChild(this.createPageButton('...', null, true));
-      }
-      pagination.appendChild(this.createPageButton(this.totalPages.toString(), this.totalPages));
-    }
-    
-    // Botón siguiente
-    const nextBtn = this.createPageButton('Siguiente ›', this.currentPage + 1, this.currentPage === this.totalPages);
-    pagination.appendChild(nextBtn);
-  }
-
-  /**
-   * Crea un botón de página
-   * @param {string} text - Texto del botón
-   * @param {number} page - Número de página
-   * @param {boolean} disabled - Si está deshabilitado
-   * @param {boolean} active - Si está activo
-   * @returns {HTMLElement} Botón de página
-   */
-  createPageButton(text, page, disabled = false, active = false) {
-    const btn = Utils.createElement('button', {
-      className: `page-btn ${active ? 'active' : ''}`,
-      disabled: disabled
-    }, text);
-    
-    if (!disabled && page !== null) {
-      btn.addEventListener('click', () => this.goToPage(page));
-    }
-    
-    return btn;
-  }
-
-  /**
-   * Va a una página específica
-   * @param {number} page - Número de página
-   */
-  async goToPage(page) {
-    if (page >= 1 && page <= this.totalPages && page !== this.currentPage) {
-      this.currentPage = page;
-      await this.loadCharacters();
-      Utils.smoothScrollTo('.characters-section', 100);
-    }
-  }
 
   /**
    * Maneja la búsqueda
@@ -614,7 +565,7 @@ class RickAndMortyApp {
   async handleSearch() {
     const searchTerm = this.elements.searchInput.value.trim();
     this.currentFilters.name = searchTerm;
-    this.currentPage = 1;
+    this.hasMore = true;
     await this.loadCharacters();
   }
 
@@ -624,7 +575,8 @@ class RickAndMortyApp {
   async handleFilterChange() {
     this.currentFilters.status = this.elements.statusFilter.value;
     this.currentFilters.species = this.elements.speciesFilter.value;
-    this.currentPage = 1;
+    this.currentFilters.episode = this.elements.episodeFilter.value;
+    this.hasMore = true;
     await this.loadCharacters();
   }
 
@@ -635,14 +587,16 @@ class RickAndMortyApp {
     this.elements.searchInput.value = '';
     this.elements.statusFilter.value = '';
     this.elements.speciesFilter.value = '';
+    this.elements.episodeFilter.value = '';
     
     this.currentFilters = {
       name: '',
       status: '',
-      species: ''
+      species: '',
+      episode: ''
     };
     
-    this.currentPage = 1;
+    this.hasMore = true;
     await this.loadCharacters();
   }
 
@@ -650,9 +604,7 @@ class RickAndMortyApp {
    * Actualiza la visualización de resultados
    */
   updateResultsDisplay() {
-    const start = (this.currentPage - 1) * 20 + 1;
-    const end = Math.min(this.currentPage * 20, this.totalCharacters);
-    Utils.updateResultsCount(`${start}-${end}`, this.totalCharacters);
+    Utils.updateResultsCount(this.characters.length, this.totalCharacters);
   }
 
   /** Favoritos */
